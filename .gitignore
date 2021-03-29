@@ -1,0 +1,12 @@
+archive
+coverage
+node_modules
+lib
+esm
+umd
+.vscode
+.DS_Store
+.env
+*.log
+*.cache
+*.tsbuildinfo

@@ -1,0 +1,70 @@
+{
+  "name": "@typeguards/core",
+  "version": "0.0.0",
+  "description": "Runtime type checking library for TS & JS",
+  "keywords": [
+    "type-guard",
+    "type-checking",
+    "type-validation",
+    "ts-runtime",
+    "runtime-type",
+    "runtime-type-checking",
+    "runtime-type-validation"
+  ],
+  "author": "Lchemist",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/Lchemist/TypeGuards",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lchemist/TypeGuards.git"
+  },
+  "files": [
+    "lib",
+    "esm",
+    "umd"
+  ],
+  "main": "lib/index.js",
+  "module": "esm/index.js",
+  "jsnext:main": "esm/index.js",
+  "unpkg": "umd/index.js",
+  "scripts": {
+    "commit": "cz",
+    "lint": "eslint --fix --ext ts,js .",
+    "test": "jest --config .jestrc.js",
+    "prebuild": "rimraf tsconfig.tsbuildinfo tsconfig.*.tsbuildinfo lib esm umd",
+    "build": "tsc -b && tsc -b ./tsconfig.esm.json && tsc -b ./tsconfig.umd.json",
+    "release": "semantic-release"
+  },
+  "engines": {
+    "node": ">=10"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^11.0.0",
+    "@commitlint/config-conventional": "^11.0.0",
+    "@semantic-release/changelog": "^5.0.1",
+    "@semantic-release/git": "^9.0.0",
+    "@types/jest": "^26.0.20",
+    "@types/node": "^14.14.22",
+    "@typescript-eslint/eslint-plugin": "^4.14.2",
+    "@typescript-eslint/parser": "^4.14.2",
+    "commitizen": "^4.2.3",
+    "cz-cc": "^1.0.1",
+    "eslint": "^7.20.0",
+    "eslint-config-prettier": "^7.2.0",
+    "eslint-config-standard": "^16.0.2",
+    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^5.0.0",
+    "husky": "^4.3.8",
+    "jest": "^26.6.3",
+    "lint-staged": "^10.5.4",
+    "pinst": "^2.1.4",
+    "prettier": "^2.2.1",
+    "rimraf": "^3.0.2",
+    "semantic-release": "^17.3.7",
+    "ts-jest": "^26.5.3",
+    "typescript": "^4.1.5"
+  }
+}
