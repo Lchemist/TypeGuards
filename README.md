@@ -1,8 +1,8 @@
 # TypeGuards
 
 [![build](https://github.com/Lchemist/TypeGuards/workflows/build/badge.svg)](https://github.com/Lchemist/TypeGuards/actions?query=workflow%3Abuild)
-[![NPM](https://img.shields.io/npm/v/@typeguards/core.svg)](https://www.npmjs.com/package/@typeguards/core)
 [![Coverage Status](https://img.shields.io/codecov/c/github/Lchemist/TypeGuards/main.svg)](https://codecov.io/gh/Lchemist/TypeGuards/branch/main)
+[![NPM](https://img.shields.io/npm/v/@typeguards/core.svg)](https://www.npmjs.com/package/@typeguards/core)
 [![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](https://commitizen.github.io/cz-cli/)
 [![Conventional Changelog](https://img.shields.io/badge/changelog-conventional-brightgreen.svg)](https://conventional-changelog.github.io)

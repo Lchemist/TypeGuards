@@ -6,8 +6,8 @@
     "type-guard",
     "type-checking",
     "type-validation",
-    "ts-runtime",
     "runtime-type",
+    "runtime-typechecking",
     "runtime-type-checking",
     "runtime-type-validation"
   ],
