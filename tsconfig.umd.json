@@ -3,7 +3,6 @@
   "compilerOptions": {
     "outDir": "umd",
     "module": "UMD",
-    "sourceMap": true,
-    "target": "ES5"
+    "sourceMap": true
   }
 }
