@@ -532,6 +532,9 @@ export const TypeGuards = {
 
 export const createSchema = <D extends SchemaDefinition>(
   factory: (types: typeof TypeGuards) => D
-): TypeGuard<Schema<D>> => TypeGuards.Schema(factory(TypeGuards))
+): TypeGuard<Schema<D>> => {
+  const schema = factory(TypeGuards)
+  return TypeGuards.Schema(isSchemaTypeGuard(schema) ? <D>schema[DEF] : schema)
+}
 
 export default TypeGuards
