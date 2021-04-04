@@ -217,6 +217,7 @@ const tests: Tests = [
     [regularFunction, '', 0, false, null, undefined, {}],
     { skipValidate: ['ES3', 'ES5'].includes(target) },
   ],
+  ['Never', [], defaultBanned, { skipTransform: true }],
   ['Unknown', [regularFunction, asyncFunction, generatorFunction, ...defaultBanned], []],
   ['Any', [regularFunction, asyncFunction, generatorFunction, ...defaultBanned], []],
   ['Optional(Number)', [0, -1, 3.333, undefined], ['', false, null, {}, []]],
@@ -276,7 +277,7 @@ describe.each(tests)(
   ) => {
     const TypeGuard = TG[type] as TypeGuard<unknown>
 
-    if (!skipValidate) {
+    if (!skipValidate && allowedValues.length > 0) {
       test.each(allowedValues)('correctly validates:   %p', value => {
         expect(TypeGuard.validate(value)).toBe(true)
       })
@@ -391,6 +392,12 @@ describe('StringArray(StringNumber, "|")', () => {
 
   it('correctly transforms:  1|2|3.33', () => {
     expect(TG['StringArray(StringNumber, "|")'].transform('1|2|3.33')).toEqual([1, 2, 3.33])
+  })
+})
+
+describe('Never', () => {
+  it.each(defaultBanned)('correctly transforms:  %p', value => {
+    expect(T.Never.transform(value)).toBe(undefined)
   })
 })
 

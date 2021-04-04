@@ -486,6 +486,15 @@ export const TypeGuards = {
   //
   // Wildcards
   // -------------------------------------------------------------------------------------------
+  /**
+   * Equivalent of TypeScript `never` type.
+   * @note `validate` API will always return `false`.
+   * @note `transform` API will always return `undefined`.
+   **/
+  Never: constructor<never>(
+    () => false,
+    () => undefined
+  ),
   Unknown: constructor<unknown>(() => true),
   Any: constructor<any>(() => true),
   //

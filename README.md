@@ -170,6 +170,7 @@ const johnJr = Person.transform(john) // { name: 'John Jr.', alive: true }
 | Schema            | A plain object
 | Optional          | T \| undefined
 | Nullable          | T \| null
+| Never             | Equivalent of TypeScript `never` type
 | Unknown           | Equivalent of TypeScript `unknown` type
 | Any               | Equivalent of TypeScript `any` type
 | Record            | Equivalent of TypeScript `Record` type
