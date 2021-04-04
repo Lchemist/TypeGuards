@@ -24,7 +24,7 @@ export type PlainObject<T = unknown> = Record<string | number | symbol, T>
 
 export type TypeGuard<D = unknown> = {
   // eslint-disable-next-line no-use-before-define
-  [DEF]: 'typeguard' | SchemaDefinition
+  [DEF]: D | 'typeguard'
   /** Returns a Boolean value that indicates whether the given value has correct type. */
   validate: (value: unknown) => boolean
   /**
@@ -32,7 +32,7 @@ export type TypeGuard<D = unknown> = {
    * @experimental
    **/
   transform: (value: unknown) => unknown
-  /** Configs type guard's validation function and/or transformation function. */
+  /** Configs type guard's validator function and/or transformer function. */
   config: (configs: Partial<Pick<TypeGuard<D>, 'validate' | 'transform'>>) => TypeGuard<D>
 }
 
@@ -61,6 +61,9 @@ export const isTypeGuard = (obj: unknown): obj is TypeGuard =>
 
 export const isPlainObject = (obj: unknown): obj is PlainObject =>
   toString.call(obj) === '[object Object]'
+
+export const isSchemaTypeGuard = (obj: unknown): obj is TypeGuard<Schema<SchemaDefinition>> =>
+  isTypeGuard(obj) && isPlainObject(obj[DEF])
 
 export const isProxy = (obj: unknown): boolean => {
   if (typeof obj !== 'object') return false
@@ -105,9 +108,13 @@ const validateValue = (value: unknown, definition: TypeDefinition): boolean => {
   return definition === value
 }
 
-const validateObject = (obj: unknown, definition: SchemaDefinition, { partial = false } = {}) => {
+const validateObject = (
+  obj: PlainObject,
+  definition: SchemaDefinition,
+  { partial = false } = {}
+) => {
   // Check type
-  if (typeof obj !== 'object' || obj === null) return false
+  if (!isPlainObject(obj)) return false
   // Check keys
   const objKeys = Reflect.ownKeys(obj)
   const defKeys = Reflect.ownKeys(definition)
@@ -152,6 +159,53 @@ const constructor = <D>(
     } as TypeGuard<D>)
   )
 
+const Union = <T extends TypeDefinition[]>(
+  ...types: T
+): TypeGuard<TypeOf<typeof types[number]>> => {
+  /** Union schema definition by merging subtypes' schema definitions. */
+  let unionDef: SchemaDefinition | undefined
+  for (const type of types) {
+    let schemaDef: SchemaDefinition = Object.create(null)
+    if (isTypeGuard(type)) {
+      const typeDef = type[DEF]
+      if (isPlainObject(typeDef)) {
+        if (!unionDef) unionDef = Object.create(null)
+        schemaDef = typeDef as SchemaDefinition
+      }
+    } else if (isPlainObject(type)) {
+      if (!unionDef) unionDef = Object.create(null)
+      schemaDef = type as SchemaDefinition
+    }
+    if (typeof unionDef === 'object') {
+      for (const key of Reflect.ownKeys(schemaDef)) {
+        unionDef[key as string] =
+          key in unionDef
+            ? Union(unionDef[key as string], schemaDef[key as string])
+            : schemaDef[key as string]
+      }
+    }
+  }
+
+  const unionSchema = constructor(obj =>
+    typeof unionDef === 'object' ? validateObject(obj as PlainObject, unionDef) : false
+  )
+
+  return constructor(
+    value => {
+      if (!isPlainObject(value)) return types.some(type => validateValue(value, type))
+      return [unionSchema, ...types].some(type =>
+        isTypeGuard(type) ? type.validate(value) : validateValue(value, type)
+      )
+    },
+    value => {
+      const type = types.find(type => validateValue(value, type))
+      if (isTypeGuard(type)) return type.transform(value)
+      return value
+    },
+    unionDef ? { definition: unionDef } : undefined
+  )
+}
+
 export const TypeGuards = {
   //
   // Primitive types
@@ -161,7 +215,7 @@ export const TypeGuards = {
    * Type guard for string whose value is a boolean indicator.
    * Useful for handling query parameters, or handling data read from file.
    *
-   * @example "true" | "TURE" | "1"
+   * @example "true" | "TRUE" | "1"
    **/
   StringBoolean: constructor<'true' | 'TRUE' | 'false' | 'FALSE' | '1' | '0'>(
     value => typeof value === 'string' && ['true', 'false', '1', '0'].includes(value.toLowerCase()),
@@ -282,9 +336,6 @@ export const TypeGuards = {
     value => value instanceof BigUint64Array && value.BYTES_PER_ELEMENT === 8
   ),
   Function: constructor<Function>(value => typeof value === 'function'),
-  //
-  // Schemas
-  // -------------------------------------------------------------------------------------------
   Record: <
     K extends
       | Array<string | number | symbol>
@@ -319,10 +370,13 @@ export const TypeGuards = {
       }
       return true
     }),
+  //
+  // Schemas
+  // -------------------------------------------------------------------------------------------
   /** @param definition An object that describes the definition of Schema. */
   Schema: <D extends SchemaDefinition>(definition: D): TypeGuard<Schema<D>> =>
     constructor(
-      obj => validateObject(obj, definition),
+      obj => validateObject(obj as PlainObject, definition),
       obj => transformObject(obj, definition),
       { definition }
     ),
@@ -333,9 +387,9 @@ export const TypeGuards = {
   Partial: <S extends SchemaDefinition | TypeGuard<Schema<SchemaDefinition>>>(
     schema: S
   ): TypeGuard<Partial<Schema<TypeOf<S>>>> => {
-    const definition = isTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
+    const definition = isSchemaTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
     return constructor(
-      obj => validateObject(obj, definition, { partial: true }),
+      obj => validateObject(obj as PlainObject, definition, { partial: true }),
       obj => transformObject(obj, definition),
       { definition }
     )
@@ -347,16 +401,22 @@ export const TypeGuards = {
   Required: <S extends SchemaDefinition | TypeGuard<Schema<SchemaDefinition>>>(
     schema: S
   ): TypeGuard<Required<Schema<TypeOf<S>>>> => {
-    const definition = isTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
+    const definition = isSchemaTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
     return constructor(
-      obj => validateObject(obj, definition),
+      obj => validateObject(obj as PlainObject, definition),
       obj => transformObject(obj, definition),
       { definition }
     )
   },
   /**
-   * Returns a Schema type guard whose properties are picked from the given schema.
-   * @param schema A schema type guard, or an object that describes the definition of Schema.
+   * Returns a Schema type guard whose properties are picked from the given Schema.
+   * @param schema A Schema type guard, or an object that describes the definition of Schema.
+   * @param keys Keys of the properties to be picked from the original Schema
+   *
+   * @note In TypeScript, static type `Pick` will only apply to the common properties
+   * of subtypes of the static type `Union`, see: https://github.com/microsoft/TypeScript/issues/28339.
+   * However, the `Pick` runtime type guard will be distributive over all of
+   * `Union` runtime type guard's sub-type-guards. Exp: Pick(Union(SchemaA, SchemaB), ['prop'])
    **/
   Pick: <
     S extends SchemaDefinition | TypeGuard<Schema<SchemaDefinition>>,
@@ -365,14 +425,14 @@ export const TypeGuards = {
     schema: S,
     keys: K[]
   ): TypeGuard<Pick<Schema<TypeOf<S>>, typeof keys[number]>> => {
-    const definition = isTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
+    const definition = isSchemaTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
     const defKeys = Reflect.ownKeys(definition)
     const pickedDefinition = Object.create(definition)
     for (const k of defKeys as string[]) {
       if ((keys as string[]).includes(k)) pickedDefinition[k] = definition[k]
     }
     return constructor(
-      obj => validateObject(obj, pickedDefinition),
+      obj => validateObject(obj as PlainObject, pickedDefinition),
       obj => transformObject(obj, pickedDefinition),
       { definition: pickedDefinition }
     )
@@ -404,18 +464,11 @@ export const TypeGuards = {
       value => (isTypeGuard(type) ? type.transform(value) : value)
     ),
   /**
-   * Describes value that can be one of or all of the given types.
+   * Describes value that is one of or union of the given types.
    * @example Union(A, B, C) = A | B | C
+   * @note When calling `transform` API, only the first argument's transformer function will be used.
    **/
-  Union: <T extends TypeDefinition[]>(...types: T): TypeGuard<TypeOf<typeof types[number]>> =>
-    constructor(
-      value => types.some(type => validateValue(value, type)),
-      value => {
-        const type = types.find(type => validateValue(value, type))
-        if (isTypeGuard(type)) return type.transform(value)
-        return value
-      }
-    ),
+  Union,
   //
   // Experimental
   // -------------------------------------------------------------------------------------------

@@ -35,6 +35,8 @@ const generatorFunction = function* () {}
 const generator = generatorFunction()
 const localMap = new Map()
 const symbol = Symbol('key')
+const SchemaA = T.Schema({ a: T.Number, b: T.String })
+const SchemaB = T.Schema({ a: T.String })
 
 const TG = {
   ...T,
@@ -59,6 +61,8 @@ const TG = {
   'Nullable(String)': T.Nullable(T.String),
   'Nullable(Undefined)': T.Nullable(T.Undefined),
   'Union(Number, String, Array())': T.Union(T.Number, T.String, T.Array()),
+  'Union(Schema({ a: Number, b: String }), Schema({ a: String }))': T.Union(SchemaA, SchemaB),
+  'Union(Schema({ a: Number, b: String }), { a: "true" })': T.Union(SchemaA, { a: 'true' }),
   'NonNullable(Union(String, Null))': T.NonNullable(T.Union(T.String, T.Null)),
 }
 
@@ -228,6 +232,35 @@ const tests: Tests = [
     [0, -3.33, '', 'str', [], [1, 2, 3]],
     [false, null, undefined, {}],
   ],
+  [
+    'Union(Schema({ a: Number, b: String }), Schema({ a: String }))',
+    [{ a: 0, b: '' }, { a: '' }, { a: '', b: '' }],
+    [
+      { a: 0 },
+      { b: '' },
+      { a: false },
+      { a: false, b: '' },
+      { a: 0, b: false },
+      { a: 0, b: '', c: 3 },
+      defaultBanned,
+    ],
+  ],
+  [
+    'Union(Schema({ a: Number, b: String }), { a: "true" })',
+    [{ a: 0, b: '' }, { a: 'true' }, { a: 'true', b: '' }],
+    [
+      { a: 1 },
+      { a: '' },
+      { a: true },
+      { b: '' },
+      { a: '', b: '' },
+      { a: false },
+      { a: false, b: '' },
+      { a: 0, b: false },
+      { a: 0, b: '', c: 3 },
+      defaultBanned,
+    ],
+  ],
   ['NonNullable(Union(String, Null))', ['', 'a'], defaultBanned.slice(1)],
 ]
 
@@ -392,11 +425,13 @@ describe('CustomNumberRange', () => {
 // -----------------------------------------------------------------------------
 const Age = T.Number.config({ validate: v => typeof v === 'number' && v >= 0 })
 
-// Custom schema
-const JobSchema = T.Schema({
+const definition = {
   title: T.String,
   salary: T.Nullable(T.Number),
-})
+}
+
+// Custom schema
+const JobSchema = T.Schema(definition)
 
 // Use closure to use type guard directly & prevent naming conflicts with JS built-in objects
 const PersonSchema = createSchema(({ Boolean, String, Number, Array, Optional, Union }) => ({
