@@ -164,24 +164,27 @@ const Union = <T extends TypeDefinition[]>(
 ): TypeGuard<TypeOf<typeof types[number]>> => {
   /** Union schema definition by merging subtypes' schema definitions. */
   let unionDef: SchemaDefinition | undefined
+  /** { [commonPropKey]: Array<commonPropDef> } */
+  const commonProps = Object.create(null)
   for (const type of types) {
-    let schemaDef: SchemaDefinition = Object.create(null)
-    if (isTypeGuard(type)) {
-      const typeDef = type[DEF]
-      if (isPlainObject(typeDef)) {
-        if (!unionDef) unionDef = Object.create(null)
-        schemaDef = typeDef as SchemaDefinition
-      }
-    } else if (isPlainObject(type)) {
+    let schemaDef: SchemaDefinition | undefined
+    if (isSchemaTypeGuard(type)) {
+      if (!unionDef) unionDef = Object.create(null)
+      schemaDef = type[DEF] as SchemaDefinition
+    } else if (!isTypeGuard(type) && isPlainObject(type)) {
       if (!unionDef) unionDef = Object.create(null)
       schemaDef = type as SchemaDefinition
     }
-    if (typeof unionDef === 'object') {
-      for (const key of Reflect.ownKeys(schemaDef)) {
-        unionDef[key as string] =
-          key in unionDef
-            ? Union(unionDef[key as string], schemaDef[key as string])
-            : schemaDef[key as string]
+    if (!schemaDef || !unionDef) continue
+    for (const key of Reflect.ownKeys(schemaDef)) {
+      const schemaProp = schemaDef[key as string]
+      const unionProp = unionDef[key as string]
+      if (key in unionDef) {
+        if (key in commonProps) commonProps[key].push(schemaProp)
+        else commonProps[key] = [unionProp, schemaProp]
+        unionDef[key as string] = Union(...commonProps[key])
+      } else {
+        unionDef[key as string] = schemaProp
       }
     }
   }
