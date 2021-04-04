@@ -98,6 +98,13 @@ type Cat = Static<typeof CatSchema>
 
 CatSchema.validate(person) // false
 CatSchema.validate({ name: 'Baby', age: undefined }) // true
+
+// Retrieve Schema definition
+const catDefinition = CatSchema.definition() // { name: String, age: Age, alive: Boolean }
+// Retrieve Indexed access type definition, which is a type guard in this case
+const CatName = CatSchema.definition('name') // T.String
+CatName.validate('str') // true
+catDefinition.name.validate('str') // true
 ```
 
 ### Transformer (Experimental Feature)

@@ -17,7 +17,7 @@ limitations under the License.
 import fs from 'fs'
 import path from 'path'
 import type { Static, TypeGuard } from '.'
-import T, { createSchema } from '.'
+import T, { createSchema, isTypeGuard } from '.'
 
 const tsconfig = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../tsconfig.json')).toString())
 // For skipping type guard's validation test if the target ES version is below type guard's requirement
@@ -485,6 +485,17 @@ describe('Schema', () => {
 
   it('correctly transforms object', () => {
     expect(PersonSchema.transform(person)).toEqual(person)
+  })
+
+  it('correctly returns schema definition using `definition` API', () => {
+    expect(JobSchema.definition()).toEqual(definition)
+  })
+
+  it('correctly returns indexed access type definition using `definition` API', () => {
+    const Title = JobSchema.definition('title') as TypeGuard
+    expect(isTypeGuard(Title)).toBe(true)
+    expect(Title.validate('')).toBe(true)
+    expect(Title.definition('key')).toBe(undefined)
   })
 })
 

@@ -24,7 +24,7 @@ export type PlainObject<T = unknown> = Record<string | number | symbol, T>
 
 export type TypeGuard<D = unknown> = {
   // eslint-disable-next-line no-use-before-define
-  [DEF]: D | 'typeguard'
+  [DEF]: SchemaDefinition | 'typeguard'
   /** Returns a Boolean value that indicates whether the given value has correct type. */
   validate: (value: unknown) => boolean
   /**
@@ -32,6 +32,15 @@ export type TypeGuard<D = unknown> = {
    * @experimental
    **/
   transform: (value: unknown) => unknown
+  /**
+   * Returns definition of the type guard,
+   * or pass an argument `key` to retrieve indexed access type definition.
+   *
+   * @param key Key of the Schema definition.
+   * @note If type guard is not a Schema, `definition(key)` will return `undefined`.
+   */
+  // eslint-disable-next-line no-use-before-define
+  definition: (key?: keyof PlainObject) => TypeDefinition | undefined
   /** Configs type guard's validator function and/or transformer function. */
   config: (configs: Partial<Pick<TypeGuard<D>, 'validate' | 'transform'>>) => TypeGuard<D>
 }
@@ -155,6 +164,11 @@ const constructor = <D>(
       [DEF]: definition,
       validate,
       transform,
+      definition: key => {
+        if (typeof key === 'undefined') return definition
+        if (isPlainObject(definition)) return definition[key as string]
+        return undefined
+      },
       config: c => constructor(c.validate ?? validate, c.transform ?? transform),
     } as TypeGuard<D>)
   )
