@@ -533,6 +533,33 @@ describe('Pick', () => {
   })
 })
 
+const AlienDogSchema = T.Omit(DogSchema, ['alive'])
+const alienDog: Static<typeof AlienDogSchema> = {
+  name: 'Snow Ball',
+  age: 99,
+}
+
+describe('Omit', () => {
+  it('correctly validates object', () => {
+    expect(AlienDogSchema.validate(alienDog)).toBe(true)
+    expect(AlienDogSchema.validate(dog)).toBe(false)
+  })
+
+  it('correctly invalidates object with incorrect property type', () => {
+    expect(AlienDogSchema.validate({ age: 99 })).toBe(false)
+    expect(AlienDogSchema.validate({ ...alienDog, age: '24' })).toBe(false)
+  })
+
+  it('correctly invalidates object with unwanted properties', () => {
+    expect(AlienDogSchema.validate({ ...alienDog, extra: undefined })).toBe(false)
+    expect(AlienDogSchema.validate({ ...alienDog, extra1: undefined, extra2: null })).toBe(false)
+  })
+
+  it('correctly transforms object', () => {
+    expect(AlienDogSchema.transform(alienDog)).toEqual(alienDog)
+  })
+})
+
 const PartialPersonSchema = T.Partial(PersonSchema)
 
 describe('Partial', () => {

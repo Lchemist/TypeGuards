@@ -437,6 +437,35 @@ export const TypeGuards = {
       { definition: pickedDefinition }
     )
   },
+  /**
+   * Returns a Schema type guard with some properties omitted from the given Schema.
+   * @param schema A Schema type guard, or an object that describes the definition of Schema.
+   * @param keys Keys of the properties to be omitted from the original Schema
+   *
+   * @note In TypeScript, static type `Omit` will only apply to the common properties
+   * of subtypes of the static type `Union`, see: https://github.com/microsoft/TypeScript/issues/28339.
+   * However, the `Omit` runtime type guard will be distributive over all of
+   * `Union` runtime type guard's sub-type-guards. Exp: Omit(Union(SchemaA, SchemaB), ['prop'])
+   **/
+  Omit: <
+    S extends SchemaDefinition | TypeGuard<Schema<SchemaDefinition>>,
+    K extends keyof TypeOf<S>
+  >(
+    schema: S,
+    keys: K[]
+  ): TypeGuard<Omit<Schema<TypeOf<S>>, typeof keys[number]>> => {
+    const definition = isSchemaTypeGuard(schema) ? <SchemaDefinition>schema[DEF] : schema
+    const defKeys = Reflect.ownKeys(definition)
+    const remainedDefinition = Object.create(definition)
+    for (const k of defKeys as string[]) {
+      if (!(keys as string[]).includes(k)) remainedDefinition[k] = definition[k]
+    }
+    return constructor(
+      obj => validateObject(obj as PlainObject, remainedDefinition),
+      obj => transformObject(obj, remainedDefinition),
+      { definition: remainedDefinition }
+    )
+  },
   //
   // Wildcards
   // -------------------------------------------------------------------------------------------

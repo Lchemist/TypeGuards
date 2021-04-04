@@ -160,15 +160,16 @@ const johnJr = Person.transform(john) // { name: 'John Jr.', alive: true }
 | BigInt64Array     |
 | BigUint64Array    | 
 | Function          | A function
-| Record            | Equivalent of TypeScript `Record` type
 | Schema            | A plain object
+| Optional          | T \| undefined
+| Nullable          | T \| null
+| Unknown           | Equivalent of TypeScript `unknown` type
+| Any               | Equivalent of TypeScript `any` type
+| Record            | Equivalent of TypeScript `Record` type
 | Partial           | Equivalent of TypeScript `Partial` type
 | Required          | Equivalent of TypeScript `Required` type
 | Pick              | Equivalent of TypeScript `Pick` type
-| Unknown           | Equivalent of TypeScript `unknown` type
-| Any               | Equivalent of TypeScript `any` type
-| Optional          | T \| undefined
-| Nullable          | T \| null
+| Omit              | Equivalent of TypeScript `Omit` type
 | NonNullable       | Equivalent of TypeScript `NonNullable` type
 | Union             | Equivalent of TypeScript union type
 | Const             | Equivalent of TypeScript const assertion
