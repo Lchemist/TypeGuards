@@ -20,6 +20,10 @@ const DEF = Symbol('definition')
 
 type Value = boolean | number | bigint | string | symbol | object | null | undefined
 
+/**
+ * A plain object created by the `Object` constructor.
+ * @example {} | { a: 0 } | Object.create({}) | Object.create(null)
+ **/
 export type PlainObject<T = unknown> = Record<string | number | symbol, T>
 
 export type TypeGuard<D = unknown> = {
@@ -495,7 +499,9 @@ export const TypeGuards = {
     () => false,
     () => undefined
   ),
+  /** Equivalent of TypeScript `unknown` type. */
   Unknown: constructor<unknown>(() => true),
+  /** Equivalent of TypeScript `any` type. */
   Any: constructor<any>(() => true),
   //
   // Utils
@@ -528,8 +534,9 @@ export const TypeGuards = {
   // Experimental
   // -------------------------------------------------------------------------------------------
   /**
-   * @reference https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
+   * Equivalent of TypeScript const assertion.
    * @experimental
+   * @reference https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
    **/
   Const: <V extends Value>(definition: V): TypeGuard<Readonly<V>> =>
     constructor(value => validateValue(value, definition)),
@@ -556,6 +563,10 @@ export const TypeGuards = {
   ),
 }
 
+/**
+ * Returns a Schema type guard.
+ * @note Useful for preventing naming conflicts with JS built-in objects.
+ */
 export const createSchema = <D extends SchemaDefinition>(
   factory: (types: typeof TypeGuards) => D
 ): TypeGuard<Schema<D>> => {
